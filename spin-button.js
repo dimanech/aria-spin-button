@@ -26,6 +26,8 @@ class SpinButton {
 
 	init() {
 		this.addEventListeners();
+		this.setInputValue(this.currentValue);
+		this.handleComponentState();
 	}
 
 	addEventListeners() {
@@ -115,8 +117,28 @@ class SpinButton {
 	setInputValue(value) {
 		this.input.setAttribute('aria-currentValue', value);
 		this.input.value = value;
+
+		this.handleButtonsState();
+	}
+
+	handleButtonsState() {
+		this.currentValue <= this.minValue ?
+				this.decrementButton.setAttribute('disabled', '') :
+				this.decrementButton.removeAttribute('disabled');
+		this.currentValue >= this.maxValue ?
+				this.incrementButton.setAttribute('disabled', '') :
+				this.incrementButton.removeAttribute('disabled');
+	}
+
+	handleComponentState() {
+		if (this.input.getAttribute('disabled') !== null) {
+			this.incrementButton.setAttribute('disabled', '');
+			this.decrementButton.setAttribute('disabled', '');
+		}
 	}
 }
 
-var spinbuton = new SpinButton(document.getElementById('spinbutton'));
-spinbuton.init();
+var spinbutton = new SpinButton(document.getElementById('spinbutton'));
+var spinbutton2 = new SpinButton(document.getElementById('spinbutton2'));
+spinbutton.init();
+spinbutton2.init();
