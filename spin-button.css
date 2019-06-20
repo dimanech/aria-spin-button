@@ -1,0 +1,8 @@
+:focus {
+	outline: solid 4px red;
+}
+
+input {
+	appearance: none;
+	-webkit-appearance: none;
+}
