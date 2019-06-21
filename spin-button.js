@@ -42,7 +42,7 @@ class SpinButton {
 
 	init() {
 		this.addEventListeners();
-		this.setInputValue(this.currentValue);
+		this.updateInputValue();
 		this.initComponentState();
 	}
 
@@ -81,22 +81,22 @@ class SpinButton {
 				break;
 			case this.keyCode.PAGEUP:
 				this.filterInput(this.currentValue += 10);
-				this.setInputValue(this.currentValue);
+				this.updateInputValue();
 				preventEventActions = true;
 				break;
 			case this.keyCode.PAGEDOWN:
 				this.filterInput(this.currentValue -= 10);
-				this.setInputValue(this.currentValue);
+				this.updateInputValue();
 				preventEventActions = true;
 				break;
 			case this.keyCode.HOME:
 				this.currentValue = this.minValue;
-				this.setInputValue(this.currentValue);
+				this.updateInputValue();
 				preventEventActions = true;
 				break;
 			case this.keyCode.END:
 				this.currentValue = this.minValue;
-				this.setInputValue(this.currentValue);
+				this.updateInputValue();
 				preventEventActions = true;
 				break;
 			default:
@@ -111,17 +111,17 @@ class SpinButton {
 
 	handleInput() {
 		this.filterInput(this.input.value);
-		this.setInputValue(this.currentValue);
+		this.updateInputValue();
 	}
 
 	increment() {
 		this.filterInput(this.currentValue += 1);
-		this.setInputValue(this.currentValue);
+		this.updateInputValue();
 	}
 
 	decrement() {
 		this.filterInput(this.currentValue -= 1);
-		this.setInputValue(this.currentValue);
+		this.updateInputValue();
 	}
 
 	filterInput(value) {
@@ -151,9 +151,9 @@ class SpinButton {
 		this.currentValue = result;
 	}
 
-	setInputValue(value) {
-		this.input.setAttribute('aria-currentValue', value);
-		this.input.value = value;
+	updateInputValue() {
+		this.input.setAttribute('aria-currentValue', this.currentValue);
+		this.input.value = this.currentValue;
 
 		this.handleButtonsState();
 	}
