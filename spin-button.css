@@ -2,6 +2,10 @@
 	outline: solid 4px red;
 }
 
+.spinbutton {
+	user-select: none;
+}
+
 input {
 	appearance: none;
 	-webkit-appearance: none;

@@ -1,12 +1,28 @@
-// https://www.w3.org/TR/wai-aria-practices/#spinbutton
-
+/*
+ * SpinButton
+ * See full specs https://www.w3.org/TR/wai-aria-practices/#spinbutton
+ * @example:
+ * 	<div class="spinbutton">
+ *		<button tabindex="-1">-</button>
+ *		<input
+ *			type="text"
+ *			value="0"
+ *			role="spinbutton"
+ *			aria-valuenow="0"
+ *			aria-valuemin="0"
+ *			aria-valuemax="50"
+ *		/>
+ *		<button tabindex="-1">+</button>
+ *	</div>
+ */
 class SpinButton {
 	constructor(domNode) {
 		this.input = domNode;
 		this.incrementButton = this.input.nextElementSibling;
 		this.decrementButton = this.input.previousElementSibling;
-		this.minValue = parseInt(this.input.getAttribute('aria-valuemin'), 10);
-		this.maxValue = parseInt(this.input.getAttribute('aria-valuemax'), 10);
+		this.minValue = this.getMinValue();
+		this.maxValue = this.getMaxValue();
+		this.middleValue = this.getStartValue();
 		this.currentValue = this.input.value;
 
 		this.keyCode = Object.freeze({
@@ -27,7 +43,12 @@ class SpinButton {
 	init() {
 		this.addEventListeners();
 		this.setInputValue(this.currentValue);
-		this.handleComponentState();
+		this.initComponentState();
+	}
+
+	destroy() {
+		this.removeEventListeners();
+		this.initComponentState();
 	}
 
 	addEventListeners() {
@@ -36,6 +57,14 @@ class SpinButton {
 
 		this.incrementButton.addEventListener('click', this.handleIncrement);
 		this.decrementButton.addEventListener('click', this.handleDecrement);
+	}
+
+	removeEventListeners() {
+		this.input.removeEventListener('keydown', this.handleKeydown);
+		this.input.removeEventListener('input', this.handleInput);
+
+		this.incrementButton.removeEventListener('click', this.handleIncrement);
+		this.decrementButton.removeEventListener('click', this.handleDecrement);
 	}
 
 	handleKeydown(event) {
@@ -61,11 +90,13 @@ class SpinButton {
 				preventEventActions = true;
 				break;
 			case this.keyCode.HOME:
-				this.setInputValue(this.minValue);
+				this.currentValue = this.minValue;
+				this.setInputValue(this.currentValue);
 				preventEventActions = true;
 				break;
 			case this.keyCode.END:
-				this.setInputValue(this.maxValue);
+				this.currentValue = this.minValue;
+				this.setInputValue(this.currentValue);
 				preventEventActions = true;
 				break;
 			default:
@@ -94,12 +125,12 @@ class SpinButton {
 	}
 
 	filterInput(value) {
-		if (value === '') {
-			return this.currentValue = this.minValue;
+		if (value === '' || value === '-') {
+			return this.currentValue = this.middleValue;
 		}
 
 		const parsedInput = parseInt(value, 10);
-		if (typeof parsedInput !== 'number' || Number.isNaN(parsedInput)) {
+		if (Number.isNaN(parsedInput)) {
 			return;
 		}
 
@@ -109,6 +140,12 @@ class SpinButton {
 			result = this.minValue;
 		} else if (parsedInput > this.maxValue) {
 			result = this.maxValue;
+		}
+
+		if (!isFinite(this.minValue)) {
+			result = parsedInput;
+		} else if (!isFinite(this.maxValue)) {
+			result = parsedInput;
 		}
 
 		this.currentValue = result;
@@ -122,23 +159,49 @@ class SpinButton {
 	}
 
 	handleButtonsState() {
-		this.currentValue <= this.minValue ?
+		(this.currentValue <= this.minValue && isFinite(this.minValue)) ?
 				this.decrementButton.setAttribute('disabled', '') :
 				this.decrementButton.removeAttribute('disabled');
-		this.currentValue >= this.maxValue ?
+		(this.currentValue >= this.maxValue && isFinite(this.maxValue)) ?
 				this.incrementButton.setAttribute('disabled', '') :
 				this.incrementButton.removeAttribute('disabled');
 	}
 
-	handleComponentState() {
+	initComponentState() {
 		if (this.input.getAttribute('disabled') !== null) {
 			this.incrementButton.setAttribute('disabled', '');
 			this.decrementButton.setAttribute('disabled', '');
 		}
 	}
+
+	getMinValue() {
+		const min = this.input.getAttribute('aria-valuemin');
+		const minParsed = parseInt(min, 10);
+
+		return (min && !isNaN(minParsed)) ? minParsed : Infinity;
+	}
+
+	getMaxValue() {
+		const max = this.input.getAttribute('aria-valuemax');
+		const maxParsed = parseInt(max, 10);
+
+		return (max && !isNaN(maxParsed)) ? maxParsed : Infinity;
+	}
+
+	getStartValue() {
+		switch (true) {
+			case !isFinite(this.minValue):
+			case !isFinite(this.maxValue):
+				return 0;
+			case (this.minValue >= 0 && this.maxValue >= 0):
+				return this.minValue;
+			case (this.minValue <= 0 && this.maxValue <= 0):
+				return this.maxValue;
+			default:
+				return 0;
+		}
+	}
 }
 
-var spinbutton = new SpinButton(document.getElementById('spinbutton'));
-var spinbutton2 = new SpinButton(document.getElementById('spinbutton2'));
-spinbutton.init();
-spinbutton2.init();
+document.querySelectorAll('[role=spinbutton]')
+		.forEach(spinbutton => new SpinButton(spinbutton).init());
