@@ -1,6 +1,6 @@
 {
   "name": "aria-focus-highlighter",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Hide focus decoration only for regular users",
   "main": "FocusHighlighter.js",
   "scripts": {
