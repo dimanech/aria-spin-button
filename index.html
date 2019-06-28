@@ -88,7 +88,9 @@
 		/>
 		<button tabindex="-1">+</button>
 	</div>
-	
-	<script src="spin-button.js"></script>
+	<script type="module">
+        import SpinButton from './SpinButton.js';
+        document.querySelectorAll('[role=spinbutton]').forEach(input => new SpinButton(input).init());
+    </script>
 </body>
 </html>
