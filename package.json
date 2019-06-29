@@ -1,6 +1,6 @@
 {
   "name": "aria-spin-button",
-  "version": "1.0.1",
+  "version": "0.0.1",
   "description": "WAI ARIA AAA compatible integers spin button",
   "main": "SpinButton.js",
   "scripts": {
@@ -9,11 +9,13 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git@github.com:dimanech/aria-focus-highlighter.git"
+    "url": "git@github.com:dimanech/aria-spinbutton.git"
   },
   "author": "Nechepurenko D.",
   "devDependencies": {
     "eslint": "^6.0.1",
-    "stylelint": "^10.1.0"
+    "stylelint": "^10.1.0",
+    "stylelint-order": "^3.0.0",
+    "stylelint-scss": "^3.8.0"
   }
 }
