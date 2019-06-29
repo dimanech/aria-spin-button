@@ -1,6 +1,6 @@
-# ARIA SpinButton
+# aria-spin-button
 
-ARIA SpinButton implementation. This implementation is confirmed with WAI ARIA AAA practices.
+Integer numbers spinButton implementation confirmed with WAI ARIA AAA practices.
 
 Please see all specs here https://www.w3.org/TR/wai-aria-practices/#spinbutton
 
