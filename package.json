@@ -1,7 +1,8 @@
 {
   "name": "aria-spin-button",
   "version": "0.0.1",
-  "description": "WAI ARIA AAA compatible integers spin button",
+	"keywords": ["spin button", "aria", "wai", "a11y", "accessability", "input number"],
+	"description": "WAI ARIA 1.1 AAA compatible integers spin button",
   "main": "SpinButton.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
