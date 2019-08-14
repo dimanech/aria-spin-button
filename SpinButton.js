@@ -1,29 +1,25 @@
 export default class SpinButton {
-	/*
+	/**
 	 * SpinButton
 	 * See full specs https://www.w3.org/TR/wai-aria-practices/#spinbutton
 	 * @example:
-	 * 	<div class="spinbutton">
-	 *		<button tabindex="-1">-</button>
-	 *		<input
-	 *			type="text"
-	 *			value="0"
-	 *			role="spinbutton"
-	 *			aria-valuenow="0"
-	 *			aria-valuemin="0"
-	 *			aria-valuemax="50"
-	 *		/>
-	 *		<button tabindex="-1">+</button>
-	 *	</div>
+	 *  <div class="spinbutton">
+	 *      <button tabindex="-1">-</button>
+	 *      <input
+	 *          type="text"
+	 *          role="spinbutton"
+	 *          value="0"
+	 *          aria-valuenow="0"
+	 *          aria-valuemin="0"
+	 *          aria-valuemax="50"
+	 *      />
+	 *      <button tabindex="-1">+</button>
+	 *  </div>
 	 */
 	constructor(domNode) {
 		this.input = domNode;
 		this.incrementButton = this.input.nextElementSibling;
 		this.decrementButton = this.input.previousElementSibling;
-		this.minValue = this.getMinValue();
-		this.maxValue = this.getMaxValue();
-		this.startValue = this.getStartValue();
-		this.currentValue = this.input.value;
 
 		this.keyCode = Object.freeze({
 			PAGEUP: 33,
@@ -31,27 +27,57 @@ export default class SpinButton {
 			END: 35,
 			HOME: 36,
 			UP: 38,
-			DOWN: 40,
+			DOWN: 40
 		});
+	}
 
+	initOptions() {
+		this.minValue = this.getMinValue();
+		this.maxValue = this.getMaxValue();
+		this.middleValue = this.getMiddleValue();
+		this.currentValue = parseInt(this.input.value, 10);
+		this.isBusy = false;
+	}
+
+	init() {
+		this.input.spinbutton = this;
+		this.initOptions();
+		this.addEventListeners();
+		this.setInputValue(this.currentValue);
+		this.updateState();
+	}
+
+	update() {
+		this.initOptions();
+		this.updateState();
+	}
+
+	set valuenow(value) {
+		this.setInputValue(parseInt(value, 10));
+	}
+
+	// freeze component in case of async calls
+	toggleBusy(isBusy) {
+		this.isBusy = isBusy;
+		if (isBusy) {
+			this.input.setAttribute('readonly', 'true');
+		} else {
+			this.input.removeAttribute('readonly');
+		}
+		this.input.setAttribute('aria-busy', isBusy);
+	}
+
+	destroy() {
+		delete this.input.spinbutton;
+		this.removeEventListeners();
+	}
+
+	addEventListeners() {
 		this.handleKeydown = this.handleKeydown.bind(this);
 		this.handleInput = this.handleInput.bind(this);
 		this.handleIncrement = this.increment.bind(this);
 		this.handleDecrement = this.decrement.bind(this);
-	}
 
-	init() {
-		this.addEventListeners();
-		this.updateInputValue();
-		this.initComponentState();
-	}
-
-	destroy() {
-		this.removeEventListeners();
-		this.initComponentState();
-	}
-
-	addEventListeners() {
 		this.input.addEventListener('keydown', this.handleKeydown);
 		this.input.addEventListener('input', this.handleInput);
 
@@ -80,23 +106,19 @@ export default class SpinButton {
 				preventEventActions = true;
 				break;
 			case this.keyCode.PAGEUP:
-				this.filterInput(this.currentValue += 10);
-				this.updateInputValue();
+				this.setInputValue(this.filterInput(this.currentValue += 10));
 				preventEventActions = true;
 				break;
 			case this.keyCode.PAGEDOWN:
-				this.filterInput(this.currentValue -= 10);
-				this.updateInputValue();
+				this.setInputValue(this.filterInput(this.currentValue -= 10));
 				preventEventActions = true;
 				break;
 			case this.keyCode.HOME:
-				this.currentValue = this.minValue;
-				this.updateInputValue();
+				this.setInputValue(this.minValue);
 				preventEventActions = true;
 				break;
 			case this.keyCode.END:
-				this.currentValue = this.minValue;
-				this.updateInputValue();
+				this.setInputValue(this.maxValue);
 				preventEventActions = true;
 				break;
 			default:
@@ -110,27 +132,26 @@ export default class SpinButton {
 	}
 
 	handleInput() {
-		this.filterInput(this.input.value);
-		this.updateInputValue();
+		this.setInputValue(this.filterInput(this.input.value));
 	}
 
 	increment() {
-		this.filterInput(this.currentValue += 1);
-		this.updateInputValue();
+		const value = parseInt(this.input.value, 10);
+		this.setInputValue(this.filterInput(value + 1));
 	}
 
 	decrement() {
-		this.filterInput(this.currentValue -= 1);
-		this.updateInputValue();
+		const value = parseInt(this.input.value, 10);
+		this.setInputValue(this.filterInput(value - 1));
 	}
 
 	filterInput(value) {
 		if (value === '' || value === '-') {
-			return this.currentValue = this.startValue;
+			return this.middleValue;
 		}
 
 		const parsedInput = parseInt(value, 10);
-		if (Number.isNaN(parsedInput)) {
+		if (typeof parsedInput !== 'number' || Number.isNaN(parsedInput)) {
 			return;
 		}
 
@@ -148,30 +169,50 @@ export default class SpinButton {
 			result = parsedInput;
 		}
 
-		this.currentValue = result;
+		return result;
 	}
 
-	updateInputValue() {
-		this.input.setAttribute('aria-currentValue', this.currentValue);
-		this.input.value = this.currentValue;
+	setInputValue(value) {
+		// We should always set values since it work like filter and override any incorrect input
+		this.input.value = value;
+		this.input.setAttribute('aria-valuenow', value);
+		this.input.setAttribute('value', value);
 
-		this.handleButtonsState();
+		if (this.currentValue !== value) {
+			this.currentValue = value;
+			this.updateState();
+			this.dispatchChange();
+		}
 	}
 
-	handleButtonsState() {
-		(this.currentValue <= this.minValue && isFinite(this.minValue)) ?
-			this.decrementButton.setAttribute('disabled', '') :
-			this.decrementButton.removeAttribute('disabled');
-		(this.currentValue >= this.maxValue && isFinite(this.maxValue)) ?
-			this.incrementButton.setAttribute('disabled', '') :
-			this.incrementButton.removeAttribute('disabled');
+	dispatchChange() {
+		window.clearTimeout(this.eventTimeout);
+
+		let updateEvent;
+		if (typeof Event === 'function') {
+			updateEvent = new Event('spinbutton:change', { bubbles: true });
+		} else {
+			updateEvent = document.createEvent('Event');
+			updateEvent.initEvent('spinbutton:change', true, true);
+		}
+
+		this.eventTimeout = window.setTimeout(() => this.input.dispatchEvent(updateEvent), 600);
 	}
 
-	initComponentState() {
+	updateState() {
 		if (this.input.getAttribute('disabled') !== null) {
 			this.incrementButton.setAttribute('disabled', '');
 			this.decrementButton.setAttribute('disabled', '');
+
+			return;
 		}
+
+		(this.currentValue <= this.minValue && isFinite(this.minValue)) ? // eslint-disable-line
+			this.decrementButton.setAttribute('disabled', '') : // eslint-disable-line
+			this.decrementButton.removeAttribute('disabled');
+		(this.currentValue >= this.maxValue && isFinite(this.maxValue)) ? // eslint-disable-line
+			this.incrementButton.setAttribute('disabled', '') : // eslint-disable-line
+			this.incrementButton.removeAttribute('disabled');
 	}
 
 	getMinValue() {
@@ -188,7 +229,7 @@ export default class SpinButton {
 		return (max && !isNaN(maxParsed)) ? maxParsed : Infinity;
 	}
 
-	getStartValue() {
+	getMiddleValue() {
 		switch (true) {
 			case !isFinite(this.minValue):
 			case !isFinite(this.maxValue):
@@ -201,4 +242,4 @@ export default class SpinButton {
 				return 0;
 		}
 	}
-};
+}
